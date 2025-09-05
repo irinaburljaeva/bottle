@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Островное меню</title>
+
+<!-- Подгружаем подсвеченную версию заранее -->
+<link rel="preload" as="image" href="bottle2.jpg">
+<style>
+  :root{
+    --size: 280px;            /* базовый размер бутылки */
+    --hover-scale: 1.03;      /* лёгкое увеличение на ховер */
+    --shadow: 0 12px 30px rgba(0,0,0,.25);
+  }
+  body{
+    margin:0; min-height:100vh; display:grid; place-items:center;
+    background: linear-gradient(#9ed8ff 0 55%, #ffe7b3 55%); /* море → пляж */
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+
+  /* Сцена острова */
+  .island{
+    position:relative; padding:40px 32px 56px; border-radius:28px;
+    background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.08));
+    backdrop-filter: blur(3px);
+    box-shadow: var(--shadow);
+  }
+
+  /* Небольшая рябь */
+  .island::before{
+    content:""; position:absolute; inset:14px 16px auto 16px; height:24px;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,.45), rgba(255,255,255,0) 60%);
+    border-radius:50%; filter: blur(6px); opacity:.7; pointer-events:none;
+    animation: ripple 4s ease-in-out infinite;
+  }
+  @keyframes ripple{
+    0%,100%{ transform: scaleX(1); opacity:.6 }
+    50%{ transform: scaleX(1.06); opacity:.85 }
+  }
+
+  /* Кнопка-бутылка */
+  .bottle{
+    position:relative; display:block; width:var(--size); aspect-ratio:1/1.35;
+    border:0; background:transparent; cursor:pointer;
+    outline: none; -webkit-tap-highlight-color: transparent;
+    transform-origin: 50% 80%;
+    animation: bob 3.8s ease-in-out infinite;
+  }
+
+  /* Покачивание на волнах */
+  @keyframes bob{
+    0%,100%{ transform: translateY(0) rotate(-1deg) }
+    50%{ transform: translateY(-6px) rotate(1.5deg) }
+  }
+
+  /* Две картинки: обычная и подсвеченная, плавно перекрываем */
+  .bottle img{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
+    transition: opacity .2s ease, transform .2s ease;
+    user-select:none; pointer-events:none;
+  }
+  .img-active{ opacity:0 }
+  .bottle:hover .img-active,
+  .bottle:focus-visible .img-active,
+  .bottle.active .img-active{ opacity:1 }
+
+  .bottle:hover .img-default,
+  .bottle:focus-visible .img-default,
+  .bottle.active .img-default{ opacity:0 }
+
+  .bottle:hover,
+  .bottle:focus-visible,
+  .bottle.active{ transform: scale(var(--hover-scale)) }
+
+  /* Рябь вокруг бутылки при ховере/тапе */
+  .bottle::after{
+    content:""; position:absolute; left:50%; bottom:-8px; width:60%;
+    height:16px; transform: translateX(-50%); border-radius:50%;
+    background: radial-gradient(ellipse, rgba(255,255,255,.55), rgba(255,255,255,0) 65%);
+    opacity:0; transition: opacity .2s ease, transform .25s ease;
+    filter: blur(4px);
+  }
+  .bottle:hover::after,
+  .bottle:focus-visible::after,
+  .bottle.active::after{ opacity:1; transform: translateX(-50%) scale(1.05) }
+
+  /* Подпись (можно убрать) */
+  .hint{
+    margin-top:18px; text-align:center; font-size:14px; color:#234;
+    opacity:.85;
+  }
+
+  /* Доступность: показываем красивый фокус только для клавиатуры */
+  .bottle:focus-visible{
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, .9), 0 0 0 8px rgba(30, 144, 255, .6);
+    border-radius: 20px;
+  }
+
+  /* Уважение к reduce-motion */
+  @media (prefers-reduced-motion: reduce){
+    .bottle, .island::before{ animation: none }
+    .bottle, .bottle img, .bottle::after{ transition: none }
+  }
+</style>
+</head>
+<body>
+
+  <div class="island">
+    <!-- Кнопка с данными о файлах -->
+    <button class="bottle"
+            aria-label="Открыть меню"
+            data-pdf="menu.pdf">
+      <img class="img-default" src="menu.png" alt="Бутылка с посланием на берегу">
+      <img class="img-active"  src="bottle2.jpg" alt="" aria-hidden="true">
+    </button>
+    <div class="hint">Нажмите на бутылку — свёрток раскроется и меню скачается</div>
+  </div>
+
+  <!-- Скрытая ссылка для скачивания -->
+  <a id="dl" href="menu.pdf" download hidden>скачать меню</a>
+
+<script>
+  (function(){
+    const bottle = document.querySelector('.bottle');
+    const dl = document.getElementById('dl');
+
+    // Включаем «активную» подсветку на тач-старт (для мобильных)
+    bottle.addEventListener('touchstart', () => bottle.classList.add('active'), {passive:true});
+    bottle.addEventListener('touchend',   () => bottle.classList.remove('active'));
+
+    // Клик: визуально подсветить и скачать PDF
+    bottle.addEventListener('click', (e) => {
+      // короткая подсветка
+      bottle.classList.add('active');
+      setTimeout(() => bottle.classList.remove('active'), 250);
+
+      // скачать PDF
+      const pdf = bottle.dataset.pdf || 'menu.pdf';
+      dl.href = pdf;
+      dl.setAttribute('download', pdf.split('/').pop() || 'menu.pdf');
+      dl.click();
+    });
+  })();
+</script>
+</body>
+</html>
