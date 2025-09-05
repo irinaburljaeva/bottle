@@ -8,109 +8,105 @@
 <link rel="preload" as="image" href="bottle2.jpg">
 <style>
   :root{
-    --size: 420px;            /* базовый размер бутылки – увеличено */
-    --hover-scale: 1.05;      /* при наведении чуть больше */
-    --shadow: 0 16px 40px rgba(0,0,0,.35); /* более выразительная тень */
+    --size: 420px;            /* размер бутылки (уже «хорошо» по вашему отзыву) */
+    --hover-scale: 1.05;
+    --card-bg: #ffffff;
+    --page-bg: #f6f7fb;       /* нейтральный спокойный фон страницы */
+    --card-shadow: 0 6px 28px rgba(17, 20, 24, .08), 0 2px 10px rgba(17, 20, 24, .04);
   }
+
+  /* Страница — чистая, без активных фонов */
   body{
-    margin:0; min-height:100vh; display:grid; place-items:center;
-    background: linear-gradient(#9ed8ff 0 55%, #ffe7b3 55%); /* море → пляж */
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    margin:0;
+    min-height:100vh;
+    display:grid;
+    place-items:center;
+    background: var(--page-bg);
+    color:#222;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
   }
 
-  /* Сцена острова */
-  .island{
-    position:relative; padding:60px 40px 70px; border-radius:36px;
-    background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.08));
-    backdrop-filter: blur(3px);
-    box-shadow: var(--shadow);
-  }
-
-  /* Небольшая рябь */
-  .island::before{
-    content:""; position:absolute; inset:20px 20px auto 20px; height:28px;
-    background: radial-gradient(ellipse at center, rgba(255,255,255,.45), rgba(255,255,255,0) 60%);
-    border-radius:50%; filter: blur(6px); opacity:.7; pointer-events:none;
-    animation: ripple 4s ease-in-out infinite;
-  }
-  @keyframes ripple{
-    0%,100%{ transform: scaleX(1); opacity:.6 }
-    50%{ transform: scaleX(1.06); opacity:.85 }
+  /* Аккуратная карточка без «шума» */
+  .card{
+    position:relative;
+    padding:48px 40px 56px;
+    border-radius:28px;
+    background: var(--card-bg);
+    box-shadow: var(--card-shadow);
   }
 
   /* Кнопка-бутылка */
   .bottle{
-    position:relative; display:block; width:var(--size); aspect-ratio:1/1.35;
-    border:0; background:transparent; cursor:pointer;
-    outline: none; -webkit-tap-highlight-color: transparent;
+    position:relative;
+    display:block;
+    width:var(--size);
+    aspect-ratio:1/1.35;
+    margin-inline:auto;
+    background:transparent;
+    border:0;
+    cursor:pointer;
+    outline:none;
+    -webkit-tap-highlight-color: transparent;
+
+    /* лёгкая глубина, без броской анимации */
+    filter: drop-shadow(0 10px 22px rgba(0,0,0,.18));
     transform-origin: 50% 80%;
-    animation: bob 3.8s ease-in-out infinite;
-    filter: drop-shadow(0 10px 25px rgba(0,0,0,.35));
+    transition: transform .18s ease;
   }
-
-  /* Покачивание на волнах */
-  @keyframes bob{
-    0%,100%{ transform: translateY(0) rotate(-1deg) }
-    50%{ transform: translateY(-6px) rotate(1.5deg) }
-  }
-
-  /* Две картинки: обычная и подсвеченная */
-  .bottle img{
-    position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
-    transition: opacity .2s ease, transform .2s ease;
-    user-select:none; pointer-events:none;
-  }
-  .img-active{ opacity:0 }
-  .bottle:hover .img-active,
-  .bottle:focus-visible .img-active,
-  .bottle.active .img-active{ opacity:1 }
-
-  .bottle:hover .img-default,
-  .bottle:focus-visible .img-default,
-  .bottle.active .img-default{ opacity:0 }
 
   .bottle:hover,
   .bottle:focus-visible,
   .bottle.active{ transform: scale(var(--hover-scale)) }
 
-  /* Рябь вокруг бутылки при ховере/тапе */
-  .bottle::after{
-    content:""; position:absolute; left:50%; bottom:-12px; width:70%;
-    height:20px; transform: translateX(-50%); border-radius:50%;
-    background: radial-gradient(ellipse, rgba(255,255,255,.55), rgba(255,255,255,0) 65%);
-    opacity:0; transition: opacity .2s ease, transform .25s ease;
-    filter: blur(4px);
+  /* Смена изображений — как прежде */
+  .bottle img{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:contain;
+    user-select:none; pointer-events:none;
+    transition: opacity .18s ease;
   }
-  .bottle:hover::after,
-  .bottle:focus-visible::after,
-  .bottle.active::after{ opacity:1; transform: translateX(-50%) scale(1.05) }
+  .img-active{ opacity:0 }
+  .bottle:hover .img-active,
+  .bottle:focus-visible .img-active,
+  .bottle.active .img-active{ opacity:1 }
+  .bottle:hover .img-default,
+  .bottle:focus-visible .img-default,
+  .bottle.active .img-default{ opacity:0 }
 
-  /* Подпись */
+  /* Ненавязчивая подсказка */
   .hint{
-    margin-top:22px; text-align:center; font-size:16px; color:#234;
-    opacity:.9;
+    margin-top:18px;
+    text-align:center;
+    font-size:14px;
+    color:#4b5563; /* спокойный серый */
   }
 
-  /* Фокус для клавиатуры */
+  /* Доступность: клавиатурный фокус */
   .bottle:focus-visible{
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, .9), 0 0 0 8px rgba(30, 144, 255, .6);
+    box-shadow: 0 0 0 4px rgba(30, 144, 255, .25);
     border-radius: 20px;
   }
 
   /* Уважение к reduce-motion */
   @media (prefers-reduced-motion: reduce){
-    .bottle, .island::before{ animation: none }
-    .bottle, .bottle img, .bottle::after{ transition: none }
+    .bottle, .bottle img{ transition:none }
+  }
+
+  /* Адаптив */
+  @media (max-width: 520px){
+    :root{ --size: 78vw } /* на мобильных бутылка масштабируется к ширине экрана */
+    .card{ padding:32px 18px 38px; border-radius:22px }
   }
 </style>
 </head>
 <body>
 
-  <div class="island">
+  <div class="card">
     <button class="bottle"
             aria-label="Открыть меню"
             data-pdf="menu.pdf">
-      <img class="img-default" src="menu.png" alt="Бутылка с посланием на берегу">
+      <img class="img-default" src="menu.png" alt="Бутылка с посланием">
       <img class="img-active"  src="bottle2.jpg" alt="" aria-hidden="true">
     </button>
     <div class="hint">Нажмите на бутылку — свёрток откроется и меню скачается</div>
@@ -124,14 +120,14 @@
     const bottle = document.querySelector('.bottle');
     const dl = document.getElementById('dl');
 
-    // Подсветка для тач-устройств
+    // Мягкая «активация» для тач-устройств (без анимационного шума)
     bottle.addEventListener('touchstart', () => bottle.classList.add('active'), {passive:true});
     bottle.addEventListener('touchend',   () => bottle.classList.remove('active'));
 
     // Клик: подсветка + скачивание PDF
     bottle.addEventListener('click', () => {
       bottle.classList.add('active');
-      setTimeout(() => bottle.classList.remove('active'), 250);
+      setTimeout(() => bottle.classList.remove('active'), 220);
 
       const pdf = bottle.dataset.pdf || 'menu.pdf';
       dl.href = pdf;
