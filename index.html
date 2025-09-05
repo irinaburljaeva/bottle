@@ -8,9 +8,9 @@
 <link rel="preload" as="image" href="bottle2.jpg">
 <style>
   :root{
-    --size: 420px;      /* размер бутылки */
+    --size: 420px;
     --hover-scale: 1.05;
-    --page-bg: #ffffff; /* чистый белый фон */
+    --page-bg: #ffffff;
   }
 
   body{
@@ -23,7 +23,6 @@
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
   }
 
-  /* Контейнер сцены */
   .stage{
     position: relative;
     display: grid;
@@ -31,10 +30,20 @@
     padding: 24px;
   }
 
-  /* Кнопка-бутылка */
+  /* Видео-заставка */
+  .intro-video{
+    width: var(--size);
+    max-width: 90vw;
+    aspect-ratio: 16/9;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 8px 22px rgba(0,0,0,.25);
+  }
+
+  /* Кнопка-бутылка (появляется после видео) */
   .bottle{
     position:relative;
-    display:block;
+    display:none; /* скрыта пока идёт видео */
     width:var(--size);
     aspect-ratio:1/1.35;
     background:transparent;
@@ -42,17 +51,12 @@
     cursor:pointer;
     outline:none;
     -webkit-tap-highlight-color: transparent;
-
-    /* глубина без лишнего шума */
     filter: drop-shadow(0 10px 22px rgba(0,0,0,.18));
     transform-origin: 50% 80%;
     transition: transform .18s ease;
-
-    /* лёгкое покачивание из стороны в сторону */
     animation: sway 4.2s ease-in-out infinite;
   }
 
-  /* базовая анимация покачивания */
   @keyframes sway{
     0%   { transform: translateX(0) rotate(-1.2deg) }
     25%  { transform: translateX(-6px) rotate(-0.4deg) }
@@ -61,15 +65,13 @@
     100% { transform: translateX(0) rotate(-1.2deg) }
   }
 
-  /* При наведении — чуть крупнее и каплю «живее» */
   .bottle:hover,
   .bottle:focus-visible,
   .bottle.active{
     transform: scale(var(--hover-scale));
-    animation-duration: 3.4s; /* на ховере качается чуть бодрее */
+    animation-duration: 3.4s;
   }
 
-  /* Смена изображений */
   .bottle img{
     position:absolute; inset:0;
     width:100%; height:100%;
@@ -85,87 +87,62 @@
   .bottle:focus-visible .img-default,
   .bottle.active .img-default{ opacity:0 }
 
-  /* Едва заметный «солнечный блик» (по запросу можно убрать) */
-  .bottle::before{
-    content:"";
-    position:absolute; inset:-6% -6%;
-    background:
-      linear-gradient(75deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.55) 50%, rgba(255,255,255,0) 60%);
-    transform: translateX(-130%);
-    mix-blend-mode: screen;
-    pointer-events:none;
-    opacity:0;
-  }
-  .bottle.shine::before{ opacity:1; animation: shine 1.2s ease forwards }
-  @keyframes shine{
-    0%   { transform: translateX(-130%) }
-    100% { transform: translateX(130%) }
-  }
-
   .hint{
     margin-top:16px;
     text-align:center;
     font-size:14px;
     color:#444;
     opacity:.85;
+    display:none; /* тоже скрыта до конца видео */
   }
 
-  /* Клавиатурный фокус */
-  .bottle:focus-visible{
-    box-shadow: 0 0 0 4px rgba(30, 144, 255, .25);
-    border-radius: 20px;
-  }
-
-  /* Уважение к reduce-motion: убираем покачивание/блик */
-  @media (prefers-reduced-motion: reduce){
-    .bottle{ animation: none; transition: none }
-    .bottle::before{ display:none }
-    .bottle img{ transition: none }
-  }
-
-  /* Адаптив */
   @media (max-width: 520px){
     :root{ --size: 78vw }
+    .intro-video{ border-radius: 8px }
   }
 </style>
 </head>
 <body>
 
   <div class="stage" aria-live="polite">
+    <!-- сначала видео -->
+    <video class="intro-video" autoplay muted playsinline>
+      <source src="bottle.mp4" type="video/mp4">
+      Ваш браузер не поддерживает видео.
+    </video>
+
+    <!-- затем бутылка -->
     <button class="bottle"
             aria-label="Открыть меню"
             data-pdf="menu.pdf">
       <img class="img-default" src="menu.png" alt="Бутылка с посланием">
       <img class="img-active"  src="bottle2.jpg" alt="" aria-hidden="true">
     </button>
+
     <div class="hint">Нажмите на бутылку — и меню скачается</div>
   </div>
 
-  <!-- Скрытая ссылка для скачивания -->
   <a id="dl" href="menu.pdf" download hidden>скачать меню</a>
 
 <script>
   (function(){
+    const video  = document.querySelector('.intro-video');
     const bottle = document.querySelector('.bottle');
-    const dl = document.getElementById('dl');
+    const hint   = document.querySelector('.hint');
+    const dl     = document.getElementById('dl');
 
-    // Лёгкий «shine» редко и на ховере (если не хотите — удалите блок с setInterval)
-    let shineTimer = setInterval(()=>{
-      if (document.hidden) return;
-      bottle.classList.add('shine');
-      setTimeout(()=> bottle.classList.remove('shine'), 1300);
-    }, 8000);
-
-    bottle.addEventListener('mouseenter', ()=>{
-      bottle.classList.add('shine');
-      setTimeout(()=> bottle.classList.remove('shine'), 1300);
+    // Когда видео заканчивается, скрываем его и показываем бутылку
+    video.addEventListener('ended', ()=>{
+      video.style.display = 'none';
+      bottle.style.display = 'block';
+      hint.style.display = 'block';
     });
 
-    // Подсветка для тач-устройств
+    // Подсветка для тач
     bottle.addEventListener('touchstart', () => bottle.classList.add('active'), {passive:true});
     bottle.addEventListener('touchend',   () => bottle.classList.remove('active'));
 
-    // Клик: подсветка + скачивание PDF
+    // Клик: подсветка + скачивание
     bottle.addEventListener('click', () => {
       bottle.classList.add('active');
       setTimeout(() => bottle.classList.remove('active'), 220);
@@ -175,9 +152,6 @@
       dl.setAttribute('download', pdf.split('/').pop() || 'menu.pdf');
       dl.click();
     });
-
-    // Чистим интервал при уходе со страницы
-    window.addEventListener('pagehide', ()=> clearInterval(shineTimer));
   })();
 </script>
 </body>
