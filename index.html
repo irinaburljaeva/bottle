@@ -5,13 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Островное меню</title>
 
-<!-- Подгружаем подсвеченную версию заранее -->
 <link rel="preload" as="image" href="bottle2.jpg">
 <style>
   :root{
-    --size: 280px;            /* базовый размер бутылки */
-    --hover-scale: 1.03;      /* лёгкое увеличение на ховер */
-    --shadow: 0 12px 30px rgba(0,0,0,.25);
+    --size: 420px;            /* базовый размер бутылки – увеличено */
+    --hover-scale: 1.05;      /* при наведении чуть больше */
+    --shadow: 0 16px 40px rgba(0,0,0,.35); /* более выразительная тень */
   }
   body{
     margin:0; min-height:100vh; display:grid; place-items:center;
@@ -21,7 +20,7 @@
 
   /* Сцена острова */
   .island{
-    position:relative; padding:40px 32px 56px; border-radius:28px;
+    position:relative; padding:60px 40px 70px; border-radius:36px;
     background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.08));
     backdrop-filter: blur(3px);
     box-shadow: var(--shadow);
@@ -29,7 +28,7 @@
 
   /* Небольшая рябь */
   .island::before{
-    content:""; position:absolute; inset:14px 16px auto 16px; height:24px;
+    content:""; position:absolute; inset:20px 20px auto 20px; height:28px;
     background: radial-gradient(ellipse at center, rgba(255,255,255,.45), rgba(255,255,255,0) 60%);
     border-radius:50%; filter: blur(6px); opacity:.7; pointer-events:none;
     animation: ripple 4s ease-in-out infinite;
@@ -46,6 +45,7 @@
     outline: none; -webkit-tap-highlight-color: transparent;
     transform-origin: 50% 80%;
     animation: bob 3.8s ease-in-out infinite;
+    filter: drop-shadow(0 10px 25px rgba(0,0,0,.35));
   }
 
   /* Покачивание на волнах */
@@ -54,7 +54,7 @@
     50%{ transform: translateY(-6px) rotate(1.5deg) }
   }
 
-  /* Две картинки: обычная и подсвеченная, плавно перекрываем */
+  /* Две картинки: обычная и подсвеченная */
   .bottle img{
     position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
     transition: opacity .2s ease, transform .2s ease;
@@ -75,8 +75,8 @@
 
   /* Рябь вокруг бутылки при ховере/тапе */
   .bottle::after{
-    content:""; position:absolute; left:50%; bottom:-8px; width:60%;
-    height:16px; transform: translateX(-50%); border-radius:50%;
+    content:""; position:absolute; left:50%; bottom:-12px; width:70%;
+    height:20px; transform: translateX(-50%); border-radius:50%;
     background: radial-gradient(ellipse, rgba(255,255,255,.55), rgba(255,255,255,0) 65%);
     opacity:0; transition: opacity .2s ease, transform .25s ease;
     filter: blur(4px);
@@ -85,13 +85,13 @@
   .bottle:focus-visible::after,
   .bottle.active::after{ opacity:1; transform: translateX(-50%) scale(1.05) }
 
-  /* Подпись (можно убрать) */
+  /* Подпись */
   .hint{
-    margin-top:18px; text-align:center; font-size:14px; color:#234;
-    opacity:.85;
+    margin-top:22px; text-align:center; font-size:16px; color:#234;
+    opacity:.9;
   }
 
-  /* Доступность: показываем красивый фокус только для клавиатуры */
+  /* Фокус для клавиатуры */
   .bottle:focus-visible{
     box-shadow: 0 0 0 4px rgba(255, 255, 255, .9), 0 0 0 8px rgba(30, 144, 255, .6);
     border-radius: 20px;
@@ -107,14 +107,13 @@
 <body>
 
   <div class="island">
-    <!-- Кнопка с данными о файлах -->
     <button class="bottle"
             aria-label="Открыть меню"
             data-pdf="menu.pdf">
       <img class="img-default" src="menu.png" alt="Бутылка с посланием на берегу">
       <img class="img-active"  src="bottle2.jpg" alt="" aria-hidden="true">
     </button>
-    <div class="hint">Нажмите на бутылку — свёрток раскроется и меню скачается</div>
+    <div class="hint">Нажмите на бутылку — свёрток откроется и меню скачается</div>
   </div>
 
   <!-- Скрытая ссылка для скачивания -->
@@ -125,17 +124,15 @@
     const bottle = document.querySelector('.bottle');
     const dl = document.getElementById('dl');
 
-    // Включаем «активную» подсветку на тач-старт (для мобильных)
+    // Подсветка для тач-устройств
     bottle.addEventListener('touchstart', () => bottle.classList.add('active'), {passive:true});
     bottle.addEventListener('touchend',   () => bottle.classList.remove('active'));
 
-    // Клик: визуально подсветить и скачать PDF
-    bottle.addEventListener('click', (e) => {
-      // короткая подсветка
+    // Клик: подсветка + скачивание PDF
+    bottle.addEventListener('click', () => {
       bottle.classList.add('active');
       setTimeout(() => bottle.classList.remove('active'), 250);
 
-      // скачать PDF
       const pdf = bottle.dataset.pdf || 'menu.pdf';
       dl.href = pdf;
       dl.setAttribute('download', pdf.split('/').pop() || 'menu.pdf');
