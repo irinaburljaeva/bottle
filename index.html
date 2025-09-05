@@ -8,14 +8,11 @@
 <link rel="preload" as="image" href="bottle2.jpg">
 <style>
   :root{
-    --size: 420px;            /* размер бутылки (уже «хорошо» по вашему отзыву) */
+    --size: 420px;            /* размер бутылки */
     --hover-scale: 1.05;
-    --card-bg: #ffffff;
-    --page-bg: #f6f7fb;       /* нейтральный спокойный фон страницы */
-    --card-shadow: 0 6px 28px rgba(17, 20, 24, .08), 0 2px 10px rgba(17, 20, 24, .04);
+    --page-bg: #fdfdfd;       /* однотонный нейтральный фон */
   }
 
-  /* Страница — чистая, без активных фонов */
   body{
     margin:0;
     min-height:100vh;
@@ -24,15 +21,6 @@
     background: var(--page-bg);
     color:#222;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-  }
-
-  /* Аккуратная карточка без «шума» */
-  .card{
-    position:relative;
-    padding:48px 40px 56px;
-    border-radius:28px;
-    background: var(--card-bg);
-    box-shadow: var(--card-shadow);
   }
 
   /* Кнопка-бутылка */
@@ -48,7 +36,7 @@
     outline:none;
     -webkit-tap-highlight-color: transparent;
 
-    /* лёгкая глубина, без броской анимации */
+    /* лёгкая глубина */
     filter: drop-shadow(0 10px 22px rgba(0,0,0,.18));
     transform-origin: 50% 80%;
     transition: transform .18s ease;
@@ -58,7 +46,7 @@
   .bottle:focus-visible,
   .bottle.active{ transform: scale(var(--hover-scale)) }
 
-  /* Смена изображений — как прежде */
+  /* Смена изображений */
   .bottle img{
     position:absolute; inset:0;
     width:100%; height:100%;
@@ -74,42 +62,36 @@
   .bottle:focus-visible .img-default,
   .bottle.active .img-default{ opacity:0 }
 
-  /* Ненавязчивая подсказка */
+  /* Подпись */
   .hint{
     margin-top:18px;
     text-align:center;
     font-size:14px;
-    color:#4b5563; /* спокойный серый */
+    color:#444;
+    opacity:.85;
   }
 
-  /* Доступность: клавиатурный фокус */
+  /* Клавиатурный фокус */
   .bottle:focus-visible{
     box-shadow: 0 0 0 4px rgba(30, 144, 255, .25);
     border-radius: 20px;
   }
 
-  /* Уважение к reduce-motion */
-  @media (prefers-reduced-motion: reduce){
-    .bottle, .bottle img{ transition:none }
-  }
-
-  /* Адаптив */
   @media (max-width: 520px){
-    :root{ --size: 78vw } /* на мобильных бутылка масштабируется к ширине экрана */
-    .card{ padding:32px 18px 38px; border-radius:22px }
+    :root{ --size: 78vw }
   }
 </style>
 </head>
 <body>
 
-  <div class="card">
+  <div>
     <button class="bottle"
             aria-label="Открыть меню"
             data-pdf="menu.pdf">
       <img class="img-default" src="menu.png" alt="Бутылка с посланием">
       <img class="img-active"  src="bottle2.jpg" alt="" aria-hidden="true">
     </button>
-    <div class="hint">Нажмите на бутылку — свёрток откроется и меню скачается</div>
+    <div class="hint">Нажмите на бутылку — и меню скачается</div>
   </div>
 
   <!-- Скрытая ссылка для скачивания -->
@@ -120,11 +102,9 @@
     const bottle = document.querySelector('.bottle');
     const dl = document.getElementById('dl');
 
-    // Мягкая «активация» для тач-устройств (без анимационного шума)
     bottle.addEventListener('touchstart', () => bottle.classList.add('active'), {passive:true});
     bottle.addEventListener('touchend',   () => bottle.classList.remove('active'));
 
-    // Клик: подсветка + скачивание PDF
     bottle.addEventListener('click', () => {
       bottle.classList.add('active');
       setTimeout(() => bottle.classList.remove('active'), 220);
