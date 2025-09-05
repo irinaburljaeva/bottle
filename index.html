@@ -8,10 +8,10 @@
 <link rel="preload" as="image" href="bottle2.jpg">
 <style>
   :root{
-    --size: 420px;      /* базовый размер */
+    --size: 420px;        /* базовая ширина блока (адаптируется ниже) */
+    --ratio: 1/1.35;      /* общее соотношение для видео и картинки */
     --hover-scale: 1.05;
     --page-bg: #ffffff;
-    --ratio: 1/1.35;    /* соотношение сторон и для видео, и для картинки */
   }
 
   body{
@@ -20,44 +20,58 @@
     display:grid;
     place-items:center;
     background: var(--page-bg);
-    font-family: system-ui, sans-serif;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
     color:#222;
   }
 
-  .stage{
+  /* Общий фрейм одинакового размера для видео и изображения */
+  .frame{
     position: relative;
-    display: grid;
-    place-items: center;
-    padding: 24px;
-  }
-
-  /* Видео-заставка */
-  .intro-video{
     width: var(--size);
     aspect-ratio: var(--ratio);
-    object-fit: cover;
-    border-radius: 12px;
-    box-shadow: 0 8px 22px rgba(0,0,0,.25);
-    display:block;
+    display: grid;
+    place-items: center;
   }
 
-  /* Бутылка — точно того же размера */
-  .bottle{
-    position:relative;
-    display:none; /* скрыта пока идёт видео */
-    width:var(--size);
-    aspect-ratio: var(--ratio);
-    background:transparent;
+  /* Видео фиксируем внутри фрейма без обрезки */
+  .intro-video{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit: contain;      /* чтобы ничего не резалось */
+    object-position: center;  /* центрируем */
+    background: #0000;        /* прозрачный фон за видео */
+    display:block;
     border:0;
+  }
+
+  /* Кнопка «Пропустить» поверх видео */
+  .skip{
+    position:absolute;
+    top:12px; right:12px;
+    padding:8px 12px;
+    font-size:14px; line-height:1;
+    background: rgba(0,0,0,.6);
+    color:#fff; border:0; border-radius:999px;
     cursor:pointer;
-    outline:none;
-    -webkit-tap-highlight-color: transparent;
+    backdrop-filter: blur(4px);
+    transition: transform .15s ease, opacity .15s ease;
+  }
+  .skip:hover, .skip:focus-visible{ transform: scale(1.05) }
+  .skip:focus-visible{ outline: 2px solid #60a5fa; outline-offset: 2px }
+
+  /* Бутылка (появится после видео) */
+  .bottle{
+    position:absolute; inset:0;
+    display:none; /* скрыта до окончания/пропуска видео */
+    width:100%; height:100%;
+    border:0; background:transparent; cursor:pointer;
+    outline:none; -webkit-tap-highlight-color: transparent;
+
     filter: drop-shadow(0 10px 22px rgba(0,0,0,.18));
     transform-origin: 50% 80%;
     transition: transform .18s ease;
     animation: sway 4.2s ease-in-out infinite;
   }
-
   @keyframes sway{
     0%   { transform: translateX(0) rotate(-1.2deg) }
     25%  { transform: translateX(-6px) rotate(-0.4deg) }
@@ -65,7 +79,6 @@
     75%  { transform: translateX(6px) rotate(0.4deg) }
     100% { transform: translateX(0) rotate(-1.2deg) }
   }
-
   .bottle:hover,
   .bottle:focus-visible,
   .bottle.active{
@@ -76,9 +89,9 @@
   .bottle img{
     position:absolute; inset:0;
     width:100%; height:100%;
-    object-fit:contain;
-    transition: opacity .18s ease;
+    object-fit: contain;
     user-select:none; pointer-events:none;
+    transition: opacity .18s ease;
   }
   .img-active{ opacity:0 }
   .bottle:hover .img-active,
@@ -94,56 +107,87 @@
     font-size:14px;
     color:#444;
     opacity:.85;
-    display:none;
+    display:none; /* показываем после появления бутылки */
   }
 
+  /* Меньшие экраны: масштабируем всё пропорционально */
   @media (max-width: 520px){
     :root{ --size: 78vw }
-    .intro-video{ border-radius: 8px }
+  }
+
+  /* Предпочтение «меньше движений» — отключаем покачивание */
+  @media (prefers-reduced-motion: reduce){
+    .bottle{ animation: none; transition: none }
+    .bottle img{ transition:none }
   }
 </style>
 </head>
 <body>
 
-  <div class="stage" aria-live="polite">
-    <!-- сначала видео -->
-    <video class="intro-video" autoplay muted playsinline>
+  <div class="frame" aria-live="polite">
+    <!-- 1) Вертикальное видео без обрезки -->
+    <video class="intro-video" autoplay muted playsinline preload="auto">
       <source src="bottle.mp4" type="video/mp4">
       Ваш браузер не поддерживает видео.
     </video>
+    <button class="skip" type="button" aria-label="Пропустить видео">Пропустить</button>
 
-    <!-- затем бутылка -->
+    <!-- 2) После видео — интерактивное изображение -->
     <button class="bottle"
             aria-label="Открыть меню"
             data-pdf="menu.pdf">
       <img class="img-default" src="menu.png" alt="Бутылка с посланием">
       <img class="img-active"  src="bottle2.jpg" alt="" aria-hidden="true">
     </button>
-
-    <div class="hint">Нажмите на бутылку — и меню скачается</div>
   </div>
 
+  <div class="hint">Нажмите на бутылку — и меню скачается</div>
+
+  <!-- Скрытая ссылка для скачивания PDF -->
   <a id="dl" href="menu.pdf" download hidden>скачать меню</a>
 
 <script>
   (function(){
+    const frame  = document.querySelector('.frame');
     const video  = document.querySelector('.intro-video');
+    const skip   = document.querySelector('.skip');
     const bottle = document.querySelector('.bottle');
     const hint   = document.querySelector('.hint');
     const dl     = document.getElementById('dl');
 
-    // Когда видео заканчивается, заменяем его на бутылку
-    video.addEventListener('ended', ()=>{
+    function showBottle(){
+      if (!video) return;
+      video.pause();
+      video.currentTime = video.duration; // чтобы сработало событие ended в аналитике
       video.style.display = 'none';
+      skip.style.display  = 'none';
       bottle.style.display = 'block';
-      hint.style.display = 'block';
-    });
+      hint.style.display   = 'block';
+    }
+
+    // Переход к бутылке по окончании видео
+    video.addEventListener('ended', showBottle);
+
+    // Кнопка «Пропустить»
+    skip.addEventListener('click', showBottle);
+
+    // Дополнительно: тап по самому видео тоже пропускает
+    video.addEventListener('click', showBottle);
+
+    // Если автоплей заблокирован браузером — пытаемся запустить вручную
+    const tryPlay = video.play();
+    if (tryPlay && typeof tryPlay.then === 'function'){
+      tryPlay.catch(() => {
+        // автоплей не удался — показываем подсказку «нажмите, чтобы начать/пропустить»
+        skip.textContent = 'Пропустить ▶';
+      });
+    }
 
     // Подсветка для тач
     bottle.addEventListener('touchstart', () => bottle.classList.add('active'), {passive:true});
     bottle.addEventListener('touchend',   () => bottle.classList.remove('active'));
 
-    // Клик: подсветка + скачивание
+    // Клик по бутылке: подсветка + скачивание PDF
     bottle.addEventListener('click', () => {
       bottle.classList.add('active');
       setTimeout(() => bottle.classList.remove('active'), 220);
