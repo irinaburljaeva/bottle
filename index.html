@@ -8,7 +8,7 @@
 <link rel="preload" as="image" href="bottle2.jpg">
 <style>
   :root{
-    --size: 420px;        /* базовая ширина блока (адаптируется ниже) */
+    --size: 420px;        /* базовая ширина блока */
     --ratio: 1/1.35;      /* общее соотношение для видео и картинки */
     --hover-scale: 1.05;
     --page-bg: #ffffff;
@@ -24,7 +24,7 @@
     color:#222;
   }
 
-  /* Общий фрейм одинакового размера для видео и изображения */
+  /* Фрейм одинакового размера для видео и изображения */
   .frame{
     position: relative;
     width: var(--size);
@@ -33,33 +33,18 @@
     place-items: center;
   }
 
-  /* Видео фиксируем внутри фрейма без обрезки */
+  /* Видео без обрезки, строго внутри фрейма */
   .intro-video{
     position:absolute; inset:0;
     width:100%; height:100%;
-    object-fit: contain;      /* чтобы ничего не резалось */
-    object-position: center;  /* центрируем */
-    background: #0000;        /* прозрачный фон за видео */
+    object-fit: contain;
+    object-position: center;
+    background: transparent;
     display:block;
     border:0;
   }
 
-  /* Кнопка «Пропустить» поверх видео */
-  .skip{
-    position:absolute;
-    top:12px; right:12px;
-    padding:8px 12px;
-    font-size:14px; line-height:1;
-    background: rgba(0,0,0,.6);
-    color:#fff; border:0; border-radius:999px;
-    cursor:pointer;
-    backdrop-filter: blur(4px);
-    transition: transform .15s ease, opacity .15s ease;
-  }
-  .skip:hover, .skip:focus-visible{ transform: scale(1.05) }
-  .skip:focus-visible{ outline: 2px solid #60a5fa; outline-offset: 2px }
-
-  /* Бутылка (появится после видео) */
+  /* Бутылка — ровно того же размера и позиции */
   .bottle{
     position:absolute; inset:0;
     display:none; /* скрыта до окончания/пропуска видео */
@@ -86,6 +71,7 @@
     animation-duration: 3.4s;
   }
 
+  /* Смена изображений */
   .bottle img{
     position:absolute; inset:0;
     width:100%; height:100%;
@@ -101,38 +87,58 @@
   .bottle:focus-visible .img-default,
   .bottle.active .img-default{ opacity:0 }
 
-  .hint{
-    margin-top:16px;
-    text-align:center;
-    font-size:14px;
-    color:#444;
-    opacity:.85;
-    display:none; /* показываем после появления бутылки */
+  /* Нижняя зона: сначала "Пропустить", потом — подсказка */
+  .below{
+    margin-top:12px;
+    min-height: 28px;          /* фиксируем высоту, чтобы не было скачка */
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
 
-  /* Меньшие экраны: масштабируем всё пропорционально */
+  .skip{
+    appearance:none;
+    padding:6px 10px;
+    font-size:14px;
+    line-height:1;
+    background: transparent;   /* максимально нейтральная */
+    color:#2563eb;             /* спокойная ссылка-кнопка */
+    border:0;
+    cursor:pointer;
+    text-decoration: underline;
+  }
+  .skip:hover,
+  .skip:focus-visible{ text-decoration: none }
+  .skip:focus-visible{ outline: 2px solid #93c5fd; outline-offset: 2px; border-radius:6px }
+
+  .hint{
+    font-size:14px;
+    color:#444;
+    opacity:.9;
+    display:none; /* появится после пропуска/окончания видео */
+  }
+
+  /* Адаптив */
   @media (max-width: 520px){
     :root{ --size: 78vw }
   }
 
-  /* Предпочтение «меньше движений» — отключаем покачивание */
+  /* Меньше движения — без покачивания */
   @media (prefers-reduced-motion: reduce){
-    .bottle{ animation: none; transition: none }
+    .bottle{ animation:none; transition:none }
     .bottle img{ transition:none }
   }
 </style>
 </head>
 <body>
 
+  <!-- 1) Одинаковый фрейм: сначала видео, потом бутылка -->
   <div class="frame" aria-live="polite">
-    <!-- 1) Вертикальное видео без обрезки -->
     <video class="intro-video" autoplay muted playsinline preload="auto">
       <source src="bottle.mp4" type="video/mp4">
       Ваш браузер не поддерживает видео.
     </video>
-    <button class="skip" type="button" aria-label="Пропустить видео">Пропустить</button>
 
-    <!-- 2) После видео — интерактивное изображение -->
     <button class="bottle"
             aria-label="Открыть меню"
             data-pdf="menu.pdf">
@@ -141,46 +147,45 @@
     </button>
   </div>
 
-  <div class="hint">Нажмите на бутылку — и меню скачается</div>
+  <!-- 2) Снизу — кнопка "Пропустить" (не влияет на выравнивание фрейма) -->
+  <div class="below">
+    <button class="skip" type="button" aria-label="Пропустить видео">Пропустить видео</button>
+    <div class="hint">Нажмите на бутылку — и меню скачается</div>
+  </div>
 
   <!-- Скрытая ссылка для скачивания PDF -->
   <a id="dl" href="menu.pdf" download hidden>скачать меню</a>
 
 <script>
   (function(){
-    const frame  = document.querySelector('.frame');
     const video  = document.querySelector('.intro-video');
-    const skip   = document.querySelector('.skip');
     const bottle = document.querySelector('.bottle');
+    const skip   = document.querySelector('.skip');
     const hint   = document.querySelector('.hint');
     const dl     = document.getElementById('dl');
 
     function showBottle(){
       if (!video) return;
       video.pause();
-      video.currentTime = video.duration; // чтобы сработало событие ended в аналитике
       video.style.display = 'none';
-      skip.style.display  = 'none';
       bottle.style.display = 'block';
-      hint.style.display   = 'block';
+      skip.style.display = 'none';
+      hint.style.display = 'block';
     }
 
-    // Переход к бутылке по окончании видео
+    // Завершение видео → показать бутылку
     video.addEventListener('ended', showBottle);
 
-    // Кнопка «Пропустить»
+    // Кнопка "Пропустить" → показать бутылку
     skip.addEventListener('click', showBottle);
 
-    // Дополнительно: тап по самому видео тоже пропускает
+    // Тап/клик по видео тоже пропускает
     video.addEventListener('click', showBottle);
 
-    // Если автоплей заблокирован браузером — пытаемся запустить вручную
-    const tryPlay = video.play();
+    // Если автоплей не начался (некоторые браузеры), текст кнопки подскажет
+    const tryPlay = video.play?.();
     if (tryPlay && typeof tryPlay.then === 'function'){
-      tryPlay.catch(() => {
-        // автоплей не удался — показываем подсказку «нажмите, чтобы начать/пропустить»
-        skip.textContent = 'Пропустить ▶';
-      });
+      tryPlay.catch(() => { skip.textContent = 'Пропустить ▶'; });
     }
 
     // Подсветка для тач
