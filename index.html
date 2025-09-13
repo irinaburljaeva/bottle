@@ -5,11 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Островное меню</title>
 
-<link rel="preload" as="image" href="bottle2.jpg">
 <style>
   :root{
-    --size: 420px;        /* базовая ширина блока */
-    --ratio: 1/1.35;      /* общее соотношение для видео и картинки */
+    --size: 420px;
+    --ratio: 1/1.35;
     --hover-scale: 1.05;
     --page-bg: #ffffff;
   }
@@ -20,11 +19,10 @@
     display:grid;
     place-items:center;
     background: var(--page-bg);
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+    font-family: system-ui, sans-serif;
     color:#222;
   }
 
-  /* Фрейм одинакового размера для видео и изображения */
   .frame{
     position: relative;
     width: var(--size);
@@ -33,21 +31,18 @@
     place-items: center;
   }
 
-  /* Видео без обрезки, строго внутри фрейма */
   .intro-video{
     position:absolute; inset:0;
     width:100%; height:100%;
     object-fit: contain;
     object-position: center;
     background: transparent;
-    display:block;
     border:0;
   }
 
-  /* Бутылка — ровно того же размера и позиции */
   .bottle{
     position:absolute; inset:0;
-    display:none; /* скрыта до окончания/пропуска видео */
+    display:none;
     width:100%; height:100%;
     border:0; background:transparent; cursor:pointer;
     outline:none; -webkit-tap-highlight-color: transparent;
@@ -55,7 +50,7 @@
     filter: drop-shadow(0 10px 22px rgba(0,0,0,.18));
     transform-origin: 50% 80%;
     transition: transform .18s ease;
-   
+    animation: sway 4.2s ease-in-out infinite;
   }
   @keyframes sway{
     0%   { transform: translateX(0) rotate(-1.2deg) }
@@ -71,7 +66,6 @@
     animation-duration: 3.4s;
   }
 
-  /* Смена изображений */
   .bottle img{
     position:absolute; inset:0;
     width:100%; height:100%;
@@ -81,49 +75,53 @@
   }
   .img-active{ opacity:0 }
   .bottle:hover .img-active,
-  .bottle:focus-visible .img-active,
   .bottle.active .img-active{ opacity:1 }
   .bottle:hover .img-default,
-  .bottle:focus-visible .img-default,
   .bottle.active .img-default{ opacity:0 }
 
-  /* Нижняя зона: сначала "Пропустить", потом — подсказка */
   .below{
     margin-top:12px;
-    min-height: 28px;          /* фиксируем высоту, чтобы не было скачка */
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    text-align:center;
   }
 
   .skip{
-    appearance:none;
-    padding:6px 10px;
-    font-size:14px;
-    line-height:1;
-    background: transparent;   /* максимально нейтральная */
-    color:#2563eb;             /* спокойная ссылка-кнопка */
+    background:none;
     border:0;
-    cursor:pointer;
+    color:#2563eb;
+    font-size:14px;
     text-decoration: underline;
+    cursor:pointer;
   }
   .skip:hover,
   .skip:focus-visible{ text-decoration: none }
   .skip:focus-visible{ outline: 2px solid #93c5fd; outline-offset: 2px; border-radius:6px }
 
-  .hint{
+  .hint{ font-size:14px; color:#444; display:none; margin-top:8px; }
+
+  /* Меню выбора */
+  .pdf-menu{
+    margin-top:16px;
+    display:none;
+    flex-direction: column;
+    gap:8px;
+    align-items:center;
+  }
+  .pdf-menu button{
+    padding:8px 16px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    background:#f9fafb;
+    cursor:pointer;
     font-size:14px;
-    color:#444;
-    opacity:.9;
-    display:none; /* появится после пропуска/окончания видео */
+  }
+  .pdf-menu button:hover{
+    background:#e5e7eb;
   }
 
-  /* Адаптив */
   @media (max-width: 520px){
     :root{ --size: 78vw }
   }
 
-  /* Меньше движения — без покачивания */
   @media (prefers-reduced-motion: reduce){
     .bottle{ animation:none; transition:none }
     .bottle img{ transition:none }
@@ -132,37 +130,42 @@
 </head>
 <body>
 
-  <!-- 1) Одинаковый фрейм: сначала видео, потом бутылка -->
-  <div class="frame" aria-live="polite">
+  <div class="frame">
     <video class="intro-video" autoplay muted playsinline preload="auto">
       <source src="bottle.mp4" type="video/mp4">
       Ваш браузер не поддерживает видео.
     </video>
 
-    <button class="bottle"
-            aria-label="Открыть меню"
-            data-pdf="menu.pdf">
-      <img class="img-default" src="menu.png" alt="Бутылка с посланием">
-      <img class="img-active"  src="bottle2.jpg" alt="" aria-hidden="true">
+    <button class="bottle" aria-label="Открыть меню">
+      <img class="img-default" src="menu.png" alt="Бутылка">
+      <img class="img-active"  src="bottle2.jpg" alt="">
     </button>
   </div>
 
-  <!-- 2) Снизу — кнопка "Пропустить" (не влияет на выравнивание фрейма) -->
   <div class="below">
-    <button class="skip" type="button" aria-label="Пропустить видео">Пропустить видео</button>
-    <div class="hint">Нажмите на бутылку — и меню скачается</div>
+    <button class="skip">Пропустить видео</button>
+    <div class="hint">Нажмите на бутылку — и выберите меню</div>
   </div>
 
-  <!-- Скрытая ссылка для скачивания PDF -->
-  <a id="dl" href="menu.pdf" download hidden>скачать меню</a>
+  <!-- Скрытая ссылка для скачивания -->
+  <a id="dl" href="" download hidden></a>
+
+  <!-- Меню выбора PDF -->
+  <div class="pdf-menu" id="pdfMenu">
+    <button data-pdf="zavtraki.pdf">Завтраки</button>
+    <button data-pdf="obedy.pdf">Обеды</button>
+    <button data-pdf="poldniki.pdf">Полдники</button>
+    <button data-pdf="uzhiny.pdf">Ужины</button>
+  </div>
 
 <script>
   (function(){
-    const video  = document.querySelector('.intro-video');
-    const bottle = document.querySelector('.bottle');
-    const skip   = document.querySelector('.skip');
-    const hint   = document.querySelector('.hint');
-    const dl     = document.getElementById('dl');
+    const video   = document.querySelector('.intro-video');
+    const bottle  = document.querySelector('.bottle');
+    const skip    = document.querySelector('.skip');
+    const hint    = document.querySelector('.hint');
+    const pdfMenu = document.getElementById('pdfMenu');
+    const dl      = document.getElementById('dl');
 
     function showBottle(){
       if (!video) return;
@@ -173,34 +176,25 @@
       hint.style.display = 'block';
     }
 
-    // Завершение видео → показать бутылку
     video.addEventListener('ended', showBottle);
-
-    // Кнопка "Пропустить" → показать бутылку
     skip.addEventListener('click', showBottle);
-
-    // Тап/клик по видео тоже пропускает
     video.addEventListener('click', showBottle);
 
-    // Если автоплей не начался (некоторые браузеры), текст кнопки подскажет
-    const tryPlay = video.play?.();
-    if (tryPlay && typeof tryPlay.then === 'function'){
-      tryPlay.catch(() => { skip.textContent = 'Пропустить ▶'; });
-    }
-
-    // Подсветка для тач
-    bottle.addEventListener('touchstart', () => bottle.classList.add('active'), {passive:true});
-    bottle.addEventListener('touchend',   () => bottle.classList.remove('active'));
-
-    // Клик по бутылке: подсветка + скачивание PDF
+    // Клик по бутылке → показать меню выбора PDF
     bottle.addEventListener('click', () => {
       bottle.classList.add('active');
       setTimeout(() => bottle.classList.remove('active'), 220);
+      pdfMenu.style.display = 'flex';
+    });
 
-      const pdf = bottle.dataset.pdf || 'menu.pdf';
-      dl.href = pdf;
-      dl.setAttribute('download', pdf.split('/').pop() || 'menu.pdf');
-      dl.click();
+    // Кнопки для скачивания разных файлов
+    pdfMenu.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const file = btn.dataset.pdf;
+        dl.href = file;
+        dl.setAttribute('download', file);
+        dl.click();
+      });
     });
   })();
 </script>
