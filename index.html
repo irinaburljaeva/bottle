@@ -7,10 +7,10 @@
 
 <style>
   :root{
-    --size: 420px;
-    --ratio: 1/1.35;
+    --size: 420px;      /* базовая ширина фрейма */
+    --ratio: 1/1.35;    /* общее соотношение для видео и бутылки */
     --hover-scale: 1.05;
-    --page-bg: #ffffff;
+    --page-bg: #ffffff; /* чистый белый фон */
   }
 
   body{
@@ -19,10 +19,11 @@
     display:grid;
     place-items:center;
     background: var(--page-bg);
-    font-family: system-ui, sans-serif;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
     color:#222;
   }
 
+  /* Фрейм одинакового размера для видео и изображения */
   .frame{
     position: relative;
     width: var(--size);
@@ -31,6 +32,7 @@
     place-items: center;
   }
 
+  /* Видео строго внутри фрейма без обрезки */
   .intro-video{
     position:absolute; inset:0;
     width:100%; height:100%;
@@ -40,9 +42,10 @@
     border:0;
   }
 
+  /* Бутылка — ровно того же размера и позиции */
   .bottle{
     position:absolute; inset:0;
-    display:none;
+    display:none; /* скрыта до окончания/пропуска видео */
     width:100%; height:100%;
     border:0; background:transparent; cursor:pointer;
     outline:none; -webkit-tap-highlight-color: transparent;
@@ -66,6 +69,7 @@
     animation-duration: 3.4s;
   }
 
+  /* Смена изображений (подсветка) */
   .bottle img{
     position:absolute; inset:0;
     width:100%; height:100%;
@@ -79,9 +83,14 @@
   .bottle:hover .img-default,
   .bottle.active .img-default{ opacity:0 }
 
+  /* Нижняя полоска: сначала «Пропустить», потом — подсказка */
   .below{
     margin-top:12px;
-    text-align:center;
+    min-height: 28px;          /* фиксируем высоту, чтобы ничего не прыгало */
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
   }
 
   .skip{
@@ -96,32 +105,68 @@
   .skip:focus-visible{ text-decoration: none }
   .skip:focus-visible{ outline: 2px solid #93c5fd; outline-offset: 2px; border-radius:6px }
 
-  .hint{ font-size:14px; color:#444; display:none; margin-top:8px; }
+  .hint{
+    font-size:14px; color:#444; display:none;
+  }
 
-  /* Меню выбора */
-  .pdf-menu{
-    margin-top:16px;
-    display:none;
-    flex-direction: column;
-    gap:8px;
-    align-items:center;
+  /* === Модалка со «свитком» === */
+  .modal{
+    position: fixed;
+    inset: 0;
+    display: none;             /* показываем/скрываем через класс .open */
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
   }
-  .pdf-menu button{
-    padding:8px 16px;
-    border:1px solid #ccc;
-    border-radius:6px;
+  .modal.open{ display:flex }
+
+  .modal__backdrop{
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.5);
+    backdrop-filter: blur(2px);
+  }
+
+  .modal__dialog{
+    position: relative;
+    z-index: 1;
+    width: min(92vw, 420px);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    padding: 20px 16px 16px;
+  }
+
+  .modal__header{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom: 10px;
+  }
+  .modal__title{
+    margin:0; font-size:18px; font-weight:600;
+  }
+  .modal__close{
+    appearance:none; border:0; background:transparent; cursor:pointer;
+    font-size:20px; line-height:1; padding:6px; border-radius:8px;
+  }
+  .modal__close:focus-visible{ outline: 2px solid #93c5fd; outline-offset: 2px }
+
+  .modal__content{
+    display:flex; flex-direction: column; gap:10px;
+  }
+  .modal__btn{
+    width:100%;
+    padding:10px 14px;
+    border:1px solid #d1d5db;
     background:#f9fafb;
+    border-radius:10px;
+    font-size:15px;
     cursor:pointer;
-    font-size:14px;
   }
-  .pdf-menu button:hover{
-    background:#e5e7eb;
-  }
+  .modal__btn:hover{ background:#eef2f7 }
+  .modal__btn:focus-visible{ outline: 2px solid #93c5fd; outline-offset: 2px }
 
   @media (max-width: 520px){
     :root{ --size: 78vw }
   }
-
   @media (prefers-reduced-motion: reduce){
     .bottle{ animation:none; transition:none }
     .bottle img{ transition:none }
@@ -130,7 +175,8 @@
 </head>
 <body>
 
-  <div class="frame">
+  <!-- 1) Одинаковый фрейм: сначала видео, потом бутылка -->
+  <div class="frame" aria-live="polite">
     <video class="intro-video" autoplay muted playsinline preload="auto">
       <source src="bottle.mp4" type="video/mp4">
       Ваш браузер не поддерживает видео.
@@ -142,20 +188,30 @@
     </button>
   </div>
 
+  <!-- 2) Снизу — «Пропустить» (не влияет на выравнивание фрейма) -->
   <div class="below">
-    <button class="skip">Пропустить видео</button>
+    <button class="skip" type="button">Пропустить видео</button>
     <div class="hint">Нажмите на бутылку — и выберите меню</div>
   </div>
 
-  <!-- Скрытая ссылка для скачивания -->
+  <!-- Скрытая ссылка для скачивания PDF -->
   <a id="dl" href="" download hidden></a>
 
-  <!-- Меню выбора PDF -->
-  <div class="pdf-menu" id="pdfMenu">
-    <button data-pdf="zavtraki.pdf">Завтраки</button>
-    <button data-pdf="obedy.pdf">Обеды</button>
-    <button data-pdf="poldniki.pdf">Полдники</button>
-    <button data-pdf="uzhiny.pdf">Ужины</button>
+  <!-- 3) Модалка выбора PDF -->
+  <div class="modal" id="pdfModal" role="dialog" aria-modal="true" aria-labelledby="pdfModalTitle">
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__dialog">
+      <div class="modal__header">
+        <h2 class="modal__title" id="pdfModalTitle">Открыв свиток, выберите раздел</h2>
+        <button class="modal__close" type="button" aria-label="Закрыть" data-close>✕</button>
+      </div>
+      <div class="modal__content">
+        <button class="modal__btn" data-pdf="zavtraki.pdf">Завтраки</button>
+        <button class="modal__btn" data-pdf="obedy.pdf">Обеды</button>
+        <button class="modal__btn" data-pdf="poldniki.pdf">Полдники</button>
+        <button class="modal__btn" data-pdf="uzhiny.pdf">Ужины</button>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -164,38 +220,85 @@
     const bottle  = document.querySelector('.bottle');
     const skip    = document.querySelector('.skip');
     const hint    = document.querySelector('.hint');
-    const pdfMenu = document.getElementById('pdfMenu');
     const dl      = document.getElementById('dl');
+
+    const modal   = document.getElementById('pdfModal');
+    const backdrop= modal.querySelector('[data-close]');
+    const btnClose= modal.querySelector('.modal__close');
+    const modalBtns = modal.querySelectorAll('.modal__btn');
+
+    let lastFocused = null;
 
     function showBottle(){
       if (!video) return;
       video.pause();
       video.style.display = 'none';
       bottle.style.display = 'block';
-      skip.style.display = 'none';
-      hint.style.display = 'block';
+      skip.style.display   = 'none';
+      hint.style.display   = 'block';
     }
 
+    // Переход к бутылке
     video.addEventListener('ended', showBottle);
     skip.addEventListener('click', showBottle);
     video.addEventListener('click', showBottle);
 
-    // Клик по бутылке → показать меню выбора PDF
+    // Если автоплей не начался (некоторые браузеры), подсказка на кнопке
+    const tryPlay = video.play?.();
+    if (tryPlay && typeof tryPlay.then === 'function'){
+      tryPlay.catch(() => { skip.textContent = 'Пропустить ▶'; });
+    }
+
+    // Открыть модалку
+    function openModal(){
+      lastFocused = document.activeElement;
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden'; // блокируем прокрутку фона
+      // сфокусируем первую кнопку
+      modalBtns[0]?.focus();
+    }
+
+    // Закрыть модалку
+    function closeModal(){
+      modal.classList.remove('open');
+      document.body.style.overflow = '';
+      // вернуть фокус на бутылку
+      bottle.focus?.();
+    }
+
+    // Клик по бутылке → открыть модалку
     bottle.addEventListener('click', () => {
       bottle.classList.add('active');
       setTimeout(() => bottle.classList.remove('active'), 220);
-      pdfMenu.style.display = 'flex';
+      openModal();
     });
 
-    // Кнопки для скачивания разных файлов
-    pdfMenu.querySelectorAll('button').forEach(btn=>{
+    // Закрытия модалки: по backdrop, по ✕, по ESC
+    modal.addEventListener('click', (e)=>{
+      if (e.target.matches('[data-close]')) closeModal();
+    });
+    btnClose.addEventListener('click', closeModal);
+    window.addEventListener('keydown', (e)=>{
+      if (!modal.classList.contains('open')) return;
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // Клик по пункту → скачивание PDF
+    modalBtns.forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const file = btn.dataset.pdf;
         dl.href = file;
         dl.setAttribute('download', file);
         dl.click();
+
+        // Если хотите закрывать модалку сразу после выбора — раскомментируйте:
+        // closeModal();
       });
     });
+
+    // Тач-подсветка для бутылки
+    bottle.addEventListener('touchstart', () => bottle.classList.add('active'), {passive:true});
+    bottle.addEventListener('touchend',   () => bottle.classList.remove('active'));
   })();
 </script>
 </body>
